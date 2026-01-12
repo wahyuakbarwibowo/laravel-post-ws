@@ -6,8 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
 use App\Http\Resources\PostResource;
-use Illuminate\Http\Request;
-use \App\Models\Post;
+use App\Models\Post;
 
 class PostController extends Controller
 {
@@ -44,6 +43,8 @@ class PostController extends Controller
             'is_draft' => $request->boolean('is_draft'),
             'published_at' => $request->published_at,
         ]);
+
+        $post->load('user');
 
         return response()->json(
             new PostResource($post),
@@ -83,6 +84,8 @@ class PostController extends Controller
         $this->authorize('update', $post);
 
         $post->update($request->validated());
+
+        $post->load('user');
 
         return new PostResource($post);
     }
