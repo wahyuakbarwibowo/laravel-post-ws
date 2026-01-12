@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Post;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePostRequest extends FormRequest
 {
@@ -28,7 +29,7 @@ class StorePostRequest extends FormRequest
             'published_at' => [
                 'nullable',
                 'date',
-                'required_if:is_draft,false',
+                Rule::requiredIf(fn () => ! $this->boolean('is_draft')),
             ],
         ];
     }
