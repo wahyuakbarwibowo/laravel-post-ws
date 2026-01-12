@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Post;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePostRequest extends FormRequest
 {
@@ -24,7 +25,11 @@ class UpdatePostRequest extends FormRequest
         return [
             'title' => ['sometimes', 'string', 'max:255'],
             'content' => ['sometimes', 'string'],
-            'published_at' => ['nullable', 'date'],
+            'published_at' => [
+                'nullable',
+                'date',
+                Rule::requiredIf(fn () => $this->has('is_draft') && ! $this->boolean('is_draft')),
+            ],
         ];
     }
 }
