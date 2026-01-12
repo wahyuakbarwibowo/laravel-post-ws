@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class PostResource extends JsonResource
@@ -18,7 +17,7 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'content' => $this->content,
-            'published_at' => $this->published_at,
+            'published_at' => optional($this->published_at)->toIso8601String(),
             'author' => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
