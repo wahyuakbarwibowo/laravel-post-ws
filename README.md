@@ -1,88 +1,208 @@
-# Laravel Skill Test
+# Laravel Skill Test – Posts API
 
-## 1. Overview
+This repository contains a backend-focused implementation of a RESTful **Posts API** using **Laravel 12**, built according to the provided skill test requirements and Laravel official best practices.
 
-Implement RESTful routes for a `Post` model using Laravel 12. Posts support **drafts**, **scheduled publishing**, and **authenticated user operations**.
+The implementation intentionally focuses on **architecture, correctness, validation, authorization, and API responses**. No UI/view layer is required.
 
-## 2. Workflow
+---
 
-1. Clone this repository and set up the local environment.
-2. Change the remote repository to your own public repository (do **not** delete commit history)
-3. Implement the required features described below.
-4. Push all changes to your public repository and let us know the repository URL.
+## Overview
 
-## 3. Specifications
+The application exposes RESTful endpoints for managing posts with support for:
 
-### General
+* Draft posts
+* Scheduled publishing
+* Published (active) posts
+* Session & cookie–based authentication
+* Authorization via Policies
+* Validation via Form Requests
+* Consistent JSON output via API Resources
 
-- Follow Laravel 12 best practices and official documentation (https://laravel.com/docs/12.x)
-- Write clear, meaningful commit messages with reasonable commit sizes
-- View files are **not required**
+### Post Status Rules
 
-### Post Status
+A post’s status is derived from the database schema:
 
-- The `posts` table already exists.
-- You are expected to understand how to determine whether a post is a draft, scheduled, or published by carefully examining the table structure, seed data, and business requirements.
-- Scheduled posts do not require a cron job. They will be published automatically when the publish date comes.
+* **Draft**: `is_draft = true`
+* **Scheduled**: `is_draft = false` and `published_at > now()`
+* **Published (Active)**: `is_draft = false` and `published_at <= now()`
 
-### Authentication
+Scheduled posts automatically become active when their publish date is reached (no cron job required).
 
-- Use Laravel’s built-in **session & cookie-based authentication**
-- Token-based systems (Sanctum, Passport, etc.) are not required
+---
 
-## 4. Requirements
+## Tech Stack
 
-### 4-1. `posts.index`
+* PHP 8.4
+* Laravel 12
+* SQLite
+* Laravel built-in authentication (session & cookies)
+* Vite (default setup; UI not required)
 
-- Retrieve a paginated list of active posts (20 per page)
-- Include the author (user) data for each post
-- Exclude draft and scheduled posts
-- Return a JSON response in a format suitable for passing to views
+---
 
-### 4-2. `posts.create`
+## Setup Instructions
 
-- Only authenticated users can access this route
-- Return the string `posts.create`
-
-### 4-3. `posts.store`
-
-- Only authenticated users can create new posts
-- Validate submitted data before creating the post
-- Return an appropriate response for a `POST` request
-
-### 4-4. `posts.show`
-
-- Retrieve a single active post
-- Return a JSON response in a format suitable for passing to views
-- Return **404** if the post is a draft or scheduled
-
-### 4-5. `posts.edit`
-
-- Only the post author can access this route
-- Return the string `posts.edit`
-
-### 4-6. `posts.update`
-
-- Only the post author can update the post
-- Validate submitted data before updating the post
-- Return an appropriate response for a `PUT/PATCH` request
-
-### 4-7. `posts.destroy`
-
-- Only the post author can delete the post
-- Return an appropriate response for a `DELETE` request
-
-## Recommended Environment
-
-- PHP 8.4
-- Node v22.15.0
-- Database: SQLite
-- Server: Laravel built-in server
-
-## Database Seeding
-
-Sample users and posts are provided.
+### 1. Clone the repository
 
 ```bash
+git clone <your-repository-url>
+cd laravel-skill-test
+```
+
+### 2. Install dependencies
+
+```bash
+composer install
+npm install
+```
+
+### 3. Environment configuration
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+### 4. Database setup
+
+```bash
+php artisan migrate
 php artisan db:seed
 ```
+
+### 5. Build assets (optional)
+
+UI is not required for this test, but to avoid Vite manifest errors:
+
+```bash
+npm run build
+```
+
+### 6. Run the server
+
+```bash
+php artisan serve
+```
+
+---
+
+## Authentication
+
+This project uses **Laravel’s built-in session & cookie authentication**.
+
+* Token-based authentication (Sanctum, Passport, etc.) is intentionally not used
+* For API testing, login via browser at `/login` to establish a session
+* Sample users are provided via database seeding
+
+---
+
+## API Endpoints
+
+### Public Routes
+
+| Method | Endpoint      | Description                         |
+| ------ | ------------- | ----------------------------------- |
+| GET    | /posts        | Paginated (20) list of active posts |
+| GET    | /posts/{post} | Show a single active post           |
+
+Draft and scheduled posts return **404** on the show endpoint.
+
+---
+
+### Authenticated Routes
+
+| Method    | Endpoint           | Description                        |
+| --------- | ------------------ | ---------------------------------- |
+| GET       | /posts/create      | Returns `posts.create`             |
+| POST      | /posts             | Create a new post                  |
+| GET       | /posts/{post}/edit | Returns `posts.edit` (author only) |
+| PUT/PATCH | /posts/{post}      | Update a post (author only)        |
+| DELETE    | /posts/{post}      | Delete a post (author only)        |
+
+---
+
+## Authorization
+
+Authorization is handled using a **PostPolicy**:
+
+* Only the post author may update or delete a post
+* Authenticated users may create posts
+* Public users may only access published posts
+
+---
+
+## Validation
+
+Validation is handled via **Form Request classes**:
+
+* `StorePostRequest`
+* `UpdatePostRequest`
+
+Validation rules correctly handle:
+
+* Draft vs published posts
+* Boolean input handling (`is_draft`)
+* Required publish dates when publishing
+
+---
+
+## API Responses
+
+All endpoints returning post data use a **PostResource** to ensure:
+
+* Consistent JSON structure
+* Author data is always included
+* Datetime values are formatted in ISO-8601
+
+Example response:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "Example Post",
+    "content": "Post content",
+    "published_at": "2026-01-12T10:00:00Z",
+    "author": {
+      "id": 1,
+      "name": "Test User"
+    }
+  }
+}
+```
+
+---
+
+## Routing Structure
+
+Routes are split between public and authenticated access for clarity and security:
+
+* **Public**: `index`, `show`
+* **Authenticated**: `create`, `store`, `edit`, `update`, `destroy`
+
+---
+
+## Notes
+
+* View files are intentionally omitted per the test specification
+* No background jobs or schedulers are required
+* Code follows Laravel 12 conventions and official documentation
+
+---
+
+## Commit History
+
+Commits are kept small, descriptive, and focused to reflect real-world development practices.
+
+---
+
+## Final Notes
+
+This submission prioritizes:
+
+* Clean architecture
+* Explicit business rules
+* Security and correctness
+* Reviewer readability
+
+Thank you for reviewing this submission.
